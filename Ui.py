@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class Ui(ABC):
 
-    @abstractmethod
+    @abstractmethod # anything that is a Ui must have a run method
     def run(self):
         raise NotImplementedError
 
@@ -11,11 +11,11 @@ class Gui(Ui):
         pass
 
     def run(self):
-        pass
+        print("Running the GUI")
 
 class Terminal(Ui):
     def __init__(self):
         pass
 
     def run(self):
-        pass
+        print("Running the terminal")
