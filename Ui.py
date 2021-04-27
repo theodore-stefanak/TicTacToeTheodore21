@@ -1,7 +1,7 @@
 from Game import Game, GameError
 from itertools import product
 from abc import ABC, abstractmethod
-from tkinter import Button, Tk, Frame, X, Y, Toplevel, StringVar, Text, Scrollbar, LEFT, RIGHT, END, N, S, W, E, Grid
+from tkinter import Button, Tk, Frame, X, Y, Toplevel, StringVar, Text, Scrollbar, LEFT, RIGHT, END, N, S, W, E, Grid, Message
 
 class Ui(ABC):
 
@@ -39,15 +39,35 @@ class Gui(Ui):
         
         self.__root = root
         self.__console = console
+        self.__gameInProgress = False
         
     def _help_callback(self):
-        pass
+        help_win = Toplevel(self.__root)
+        help_text = "To play a game, click the Play Game button in the main window"
+        Message(help_win, text=help_text).pack(fill=X)
+        help_win.title("Help")
+        Button(help_win,
+              text="Dismiss",
+              command=help_win.destroy).pack(fill=X)
+        
+        
+        
+    
+    def _dismiss_game(self):
+        self.__gameInProgress = False
+        self.__game_win.destroy()
     
     def _play_callback(self):
+        if self.__gameInProgress:
+            return
+        
+        self.__gameInProgress = True
+        self.__finished = False
         self.__game = Game()
         game_win = Toplevel(self.__root)
         game_win.title("Game")
         frame = Frame(game_win)
+        self.__game_win = game_win
         
         # Resizing
         Grid.columnconfigure(game_win,0,weight=1)
@@ -57,7 +77,7 @@ class Gui(Ui):
         
         Button(game_win, 
                text="Dismiss", 
-               command= game_win.destroy).grid(row=1,column=0,sticky=N+S+W+E)
+               command= self._dismiss_game).grid(row=1,column=0,sticky=N+S+W+E)
         
         # only one game at a time, overwrites all other games
         self.__buttons = [[None]*3 for _ in range(3)]
@@ -70,7 +90,7 @@ class Gui(Ui):
             
             Button(frame,
                   textvariable=b,
-                  command=cmd).grid(row=row,column=col)
+                  command=cmd).grid(row=row,column=col, sticky=N+S+W+E)
             self.__buttons[row][col] = b
             
         # More resizing
@@ -79,6 +99,9 @@ class Gui(Ui):
             Grid.rowconfigure(frame,i,weight=1)
             
     def __play_and_refresh(self, row, col):
+        if self.__finished:
+            return
+
         try:
             self.__game.play(row+1, col+1)
         except GameError as e:
@@ -90,6 +113,7 @@ class Gui(Ui):
             
         w = self.__game.winner
         if w is not None:
+            self.__finished = True
             if w is Game.DRAW:
                 self.__console.insert(END, "The game was drawn\n")
             else:
